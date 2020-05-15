@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: cloudmap-api
+
+Parameters:
+  NamespaceName:
+    Type: String
+    Description: "An existing CloudMap namespace name"
+    Default: marek.rocks
+
+  ServiceName:
+    Type: String
+    Description: "An existing CloudMap service name"
+    Default: blog-endpoint
+
+Resources:
+  CloudMapApi:
+    Type: AWS::Serverless::Function 
+    Properties:
+      MemorySize: 128
+      CodeUri: return_api/
+      Handler: cloudmap_api.handler
+      Runtime: python3.8
+      ReservedConcurrentExecutions: 1
+      Timeout: 3
+      Tracing: Active
+      Environment:
+        Variables:
+          NamespaceName: !Ref NamespaceName
+          ServiceName: !Ref ServiceName
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'servicediscovery:DiscoverInstances'
+              Resource: '*'
+      Events:
+        Api1:
+          Type: HttpApi
+          Properties:
+            Path: '/{proxy+}'
+            Method: GET
+
+Outputs:
+  CloudMapApi:
+    Description: "CloudMapAPI endpoint"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
